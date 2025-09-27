@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全螢幕響應式區塊計算</title>
+    <title>整合式響應式區塊計算器</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,7 +13,7 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* 防止滾動條出現，確保 100vh 覆蓋整個視窗 */
+            overflow: hidden; /* 確保 100vh 覆蓋整個視窗，防止滾動條 */
             touch-action: manipulation;
             background-color: #f7f7f7;
         }
@@ -39,7 +39,7 @@
             padding: 4px 8px;
             border-radius: 4px;
             display: inline-block;
-            margin-top: 4px;
+            margin-top: 8px;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         }
         
@@ -51,67 +51,74 @@
             justify-content: center;
             width: 100vw;
             transition: height 0.3s ease; /* 使高度變化更平滑 */
+            text-align: center;
+            min-height: 50px; /* 確保最小可見高度 */
+            box-sizing: border-box; /* 確保 padding 不會增加區塊的總高 */
         }
     </style>
 </head>
 <body>
 
-    <!-- 1. 全螢幕佈局視覺化容器 (佔據 100vw x 100vh) -->
+    <!-- 1. 全螢幕佈局視覺化容器 (精確佔據 100vw x 100vh) -->
     <div id="full-screen-layout" class="fixed top-0 left-0 w-screen h-screen flex flex-col z-0">
         
         <!-- 頁首 (Header) -->
-        <div id="header-block" class="layout-block bg-blue-600/90 text-white shadow-xl">
+        <div id="header-block" class="layout-block bg-blue-600/90 text-white shadow-xl p-4">
             <div class="text-xl sm:text-2xl font-bold">頁首 (Header)</div>
             <div id="header-dimension-display" class="dimension-label"></div>
         </div>
 
-        <!-- 頁中 (Content) -->
-        <div id="content-block" class="layout-block bg-indigo-600/90 text-white shadow-xl">
-            <div class="text-xl sm:text-2xl font-bold">頁中 (Content)</div>
+        <!-- 頁中 (Content) - 包含控制面板 -->
+        <div id="content-block" class="layout-block bg-indigo-600/90 text-white shadow-xl p-4">
+            
+            <!-- 整合控制面板 -->
+            <div id="integrated-control-panel" class="p-4 sm:p-6 bg-white/95 rounded-xl shadow-2xl text-gray-800 w-11/12 max-w-xl mx-auto">
+                
+                <h1 class="text-xl font-extrabold text-blue-700 text-center mb-4">響應式佈局設定</h1>
+
+                <!-- 總體視窗尺寸顯示 -->
+                <div class="text-center mb-4 p-2 bg-gray-100 rounded-lg shadow-inner">
+                    <h2 class="text-sm font-medium text-gray-700">當前瀏覽器視窗高度 (100vh)</h2>
+                    <p id="viewport-height-size" class="text-xl font-extrabold text-blue-600 mt-1"></p>
+                </div>
+
+                <!-- 區塊高度控制 -->
+                <div class="space-y-2">
+                    <h3 class="text-base font-semibold text-gray-700 mb-3 text-center">調整區塊高度分配 (vh %)：</h3>
+                    <div class="grid grid-cols-3 gap-3 items-center">
+                        
+                        <!-- 頁首高度輸入 -->
+                        <div>
+                            <label for="header-height" class="block text-xs font-medium text-gray-500 text-center">頁首 (%)</label>
+                            <input type="number" id="header-height" value="10" min="0" max="100" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg font-bold">
+                        </div>
+
+                        <!-- 頁中高度輸入 -->
+                        <div>
+                            <label for="content-height" class="block text-xs font-medium text-gray-500 text-center">頁中 (%)</label>
+                            <input type="number" id="content-height" value="80" min="0" max="100" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg font-bold">
+                        </div>
+
+                        <!-- 頁尾高度輸入 -->
+                        <div>
+                            <label for="footer-height" class="block text-xs font-medium text-gray-500 text-center">頁尾 (%)</label>
+                            <input type="number" id="footer-height" value="10" min="0" max="100" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg font-bold">
+                        </div>
+                    </div>
+                    <p class="text-sm text-center font-bold text-red-600 pt-2" id="sum-warning" style="display: none;">
+                        ⚠️ 高度總和非 100%! 當前為 <span id="current-sum"></span>%。請調整。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="text-xl sm:text-2xl font-bold mt-4">頁中 (Content)</div>
             <div id="content-dimension-display" class="dimension-label"></div>
         </div>
 
         <!-- 頁尾 (Footer) -->
-        <div id="footer-block" class="layout-block bg-purple-600/90 text-white shadow-xl">
+        <div id="footer-block" class="layout-block bg-purple-600/90 text-white shadow-xl p-4">
             <div class="text-xl sm:text-2xl font-bold">頁尾 (Footer)</div>
             <div id="footer-dimension-display" class="dimension-label"></div>
-        </div>
-    </div>
-
-    <!-- 2. 控制面板 (固定在頁面上方，高 z-index) -->
-    <div class="fixed top-0 left-0 w-full z-10 p-4 bg-white shadow-2xl border-b border-gray-200">
-        <h1 class="text-xl font-extrabold text-blue-700 text-center mb-3">全螢幕響應式佈局計算</h1>
-        
-        <!-- 總體視窗尺寸顯示 -->
-        <div class="text-center mb-4 p-2 bg-gray-100 rounded-lg shadow-inner">
-            <h2 class="text-sm font-medium text-gray-700">當前瀏覽器視窗高度 (100vh)</h2>
-            <p id="viewport-height-size" class="text-xl font-extrabold text-blue-600 mt-1"></p>
-        </div>
-
-        <!-- 區塊高度控制 -->
-        <div class="space-y-2">
-            <h3 class="text-base font-semibold text-gray-700 mb-2 text-center">調整區塊高度分配 (總和必須為 100%)：</h3>
-            <div class="grid grid-cols-3 gap-3 items-center">
-                
-                <!-- 頁首高度 -->
-                <div>
-                    <label for="header-height" class="block text-xs font-medium text-gray-500 text-center">頁首 (%)</label>
-                    <input type="number" id="header-height" value="10" min="0" max="100" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg font-bold">
-                </div>
-
-                <!-- 頁中高度 -->
-                <div>
-                    <label for="content-height" class="block text-xs font-medium text-gray-500 text-center">頁中 (%)</label>
-                    <input type="number" id="content-height" value="80" min="0" max="100" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg font-bold">
-                </div>
-
-                <!-- 頁尾高度 -->
-                <div>
-                    <label for="footer-height" class="block text-xs font-medium text-gray-500 text-center">頁尾 (%)</label>
-                    <input type="number" id="footer-height" value="10" min="0" max="100" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-lg font-bold">
-                </div>
-            </div>
-            <p class="text-sm text-center font-bold text-red-500 pt-1" id="sum-warning" style="display: none;">高度總和非 100%! 請調整。</p>
         </div>
     </div>
     
@@ -122,6 +129,7 @@
         // DOM 元素引用
         const viewportHeightDisplay = document.getElementById('viewport-height-size');
         const sumWarning = document.getElementById('sum-warning');
+        const currentSumDisplay = document.getElementById('current-sum');
 
         // 區塊高度輸入框
         const headerInput = document.getElementById('header-height');
@@ -138,7 +146,7 @@
         const contentDimensionDisplay = document.getElementById('content-dimension-display');
         const footerDimensionDisplay = document.getElementById('footer-dimension-display');
 
-        // 應用程式狀態
+        // 應用程式狀態 (初始值)
         let headerPercent = 10;
         let contentPercent = 80;
         let footerPercent = 10;
@@ -149,7 +157,7 @@
         function updateLayout() {
             // 1. 獲取當前視窗高度
             const currentWindowHeight = window.innerHeight;
-            viewportHeightDisplay.textContent = `${currentWindowHeight} 像素 (px)`;
+            viewportHeightDisplay.textContent = `${currentWindowHeight.toFixed(0)} 像素 (px)`;
             
             // 2. 獲取當前百分比值
             headerPercent = parseInt(headerInput.value) || 0;
@@ -160,36 +168,24 @@
 
             // 3. 檢查總和是否為 100%
             const isValid = totalPercent === 100;
+            currentSumDisplay.textContent = totalPercent;
             sumWarning.style.display = isValid ? 'none' : 'block';
             
-            // 只有在有效時才更新佈局和顯示
-            if (isValid) {
-                // 4. 計算各自的真實 vh 像素高度
-                const headerRealPx = (currentWindowHeight * headerPercent) / 100;
-                const contentRealPx = (currentWindowHeight * contentPercent) / 100;
-                const footerRealPx = (currentWindowHeight * footerPercent) / 100;
+            // 4. 計算各自的真實 vh 像素高度
+            const headerRealPx = (currentWindowHeight * headerPercent) / 100;
+            const contentRealPx = (currentWindowHeight * contentPercent) / 100;
+            const footerRealPx = (currentWindowHeight * footerPercent) / 100;
 
-                // 5. 設置視覺化區塊的高度 (使用 %，因為父容器是 100vh 的 flex 容器)
-                // 為了使用 vh 單位，我們直接將百分比轉換為 vh 單位設定給 style.height
-                headerBlock.style.height = `${headerPercent}vh`;
-                contentBlock.style.height = `${contentPercent}vh`;
-                footerBlock.style.height = `${footerPercent}vh`;
-                
-                // 6. 更新尺寸標示
-                headerDimensionDisplay.textContent = `高: ${headerPercent}% / ${headerPercent}vh (${headerRealPx.toFixed(0)}px)`;
-                contentDimensionDisplay.textContent = `高: ${contentPercent}% / ${contentPercent}vh (${contentRealPx.toFixed(0)}px)`;
-                footerDimensionDisplay.textContent = `高: ${footerPercent}% / ${footerPercent}vh (${footerRealPx.toFixed(0)}px)`;
-            } else {
-                // 如果總和不正確，將高度設為無效狀態 (例如，讓它們平均分配或保持固定)
-                // 這裡選擇將它們重置為輸入的百分比，但顯示警告，讓開發者知道佈局會出錯
-                headerBlock.style.height = `${headerPercent}vh`;
-                contentBlock.style.height = `${contentPercent}vh`;
-                footerBlock.style.height = `${footerPercent}vh`;
-                
-                headerDimensionDisplay.textContent = `高: ${headerPercent}% / ${headerPercent}vh`;
-                contentDimensionDisplay.textContent = `高: ${contentPercent}% / ${contentPercent}vh`;
-                footerDimensionDisplay.textContent = `高: ${footerPercent}% / ${footerPercent}vh`;
-            }
+            // 5. 設置視覺化區塊的高度 (直接使用 vh 單位)
+            // 即使總和不為 100，我們仍然使用輸入的百分比作為 vh 單位，來展示佈局錯誤。
+            headerBlock.style.height = `${headerPercent}vh`;
+            contentBlock.style.height = `${contentPercent}vh`;
+            footerBlock.style.height = `${footerPercent}vh`;
+            
+            // 6. 更新尺寸標示
+            headerDimensionDisplay.textContent = `高: ${headerPercent}vh (${headerRealPx.toFixed(0)}px)`;
+            contentDimensionDisplay.textContent = `高: ${contentPercent}vh (${contentRealPx.toFixed(0)}px)`;
+            footerDimensionDisplay.textContent = `高: ${footerPercent}vh (${footerRealPx.toFixed(0)}px)`;
         }
 
         /**
@@ -218,7 +214,7 @@
             input.addEventListener('input', handlePercentChange);
         });
         
-        // 監聽視窗尺寸變化，實現響應式計算 (最重要的部分)
+        // 監聽視窗尺寸變化，實現響應式計算
         window.addEventListener('resize', () => {
              // 為了避免重複觸發，使用 setTimeout 進行優化
              setTimeout(updateLayout, 100);
