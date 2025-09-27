@@ -30,17 +30,18 @@
             margin: 0;
         }
         
-        /* 尺寸標籤樣式 */
+        /* 尺寸標籤樣式 - 調整 line-height 以容納兩行寬高資訊 */
         .dimension-label {
             font-size: 0.8rem;
             font-weight: 600;
             color: #ffffff;
             background-color: rgba(0, 0, 0, 0.5);
-            padding: 4px 8px;
+            padding: 6px 8px; /* 增加垂直內邊距 */
             border-radius: 4px;
             display: inline-block;
             margin-top: 8px;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            line-height: 1.4; /* 確保行距合適 */
         }
         
         /* 區塊樣式 - 確保內容居中且可讀 */
@@ -50,10 +51,10 @@
             align-items: center;
             justify-content: center;
             width: 100vw;
-            transition: height 0.3s ease; /* 使高度變化更平滑 */
+            transition: height 0.3s ease;
             text-align: center;
-            min-height: 50px; /* 確保最小可見高度 */
-            box-sizing: border-box; /* 確保 padding 不會增加區塊的總高 */
+            min-height: 50px;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -78,8 +79,9 @@
 
                 <!-- 總體視窗尺寸顯示 -->
                 <div class="text-center mb-4 p-2 bg-gray-100 rounded-lg shadow-inner">
-                    <h2 class="text-sm font-medium text-gray-700">當前瀏覽器視窗高度 (100vh)</h2>
-                    <p id="viewport-height-size" class="text-xl font-extrabold text-blue-600 mt-1"></p>
+                    <h2 class="text-sm font-medium text-gray-700">當前瀏覽器視窗尺寸 (100vw x 100vh)</h2>
+                    <!-- 標示當前的 W x H 像素值 -->
+                    <p id="viewport-size-display" class="text-xl font-extrabold text-blue-600 mt-1"></p>
                 </div>
 
                 <!-- 區塊高度控制 -->
@@ -127,7 +129,7 @@
         const apiKey = ""; 
 
         // DOM 元素引用
-        const viewportHeightDisplay = document.getElementById('viewport-height-size');
+        const viewportSizeDisplay = document.getElementById('viewport-size-display');
         const sumWarning = document.getElementById('sum-warning');
         const currentSumDisplay = document.getElementById('current-sum');
 
@@ -155,9 +157,12 @@
          * 計算並更新所有尺寸顯示和區塊高度
          */
         function updateLayout() {
-            // 1. 獲取當前視窗高度
+            // 1. 獲取當前視窗寬度和高度 (vw/vh 的基礎)
+            const currentWindowWidth = window.innerWidth;
             const currentWindowHeight = window.innerHeight;
-            viewportHeightDisplay.textContent = `${currentWindowHeight.toFixed(0)} 像素 (px)`;
+            
+            // 總體視窗尺寸顯示
+            viewportSizeDisplay.textContent = `${currentWindowWidth.toFixed(0)}px (寬) x ${currentWindowHeight.toFixed(0)}px (高)`;
             
             // 2. 獲取當前百分比值
             headerPercent = parseInt(headerInput.value) || 0;
@@ -177,15 +182,20 @@
             const footerRealPx = (currentWindowHeight * footerPercent) / 100;
 
             // 5. 設置視覺化區塊的高度 (直接使用 vh 單位)
-            // 即使總和不為 100，我們仍然使用輸入的百分比作為 vh 單位，來展示佈局錯誤。
             headerBlock.style.height = `${headerPercent}vh`;
             contentBlock.style.height = `${contentPercent}vh`;
             footerBlock.style.height = `${footerPercent}vh`;
             
-            // 6. 更新尺寸標示
-            headerDimensionDisplay.textContent = `高: ${headerPercent}vh (${headerRealPx.toFixed(0)}px)`;
-            contentDimensionDisplay.textContent = `高: ${contentPercent}vh (${contentRealPx.toFixed(0)}px)`;
-            footerDimensionDisplay.textContent = `高: ${footerPercent}vh (${footerRealPx.toFixed(0)}px)`;
+            // 6. 更新尺寸標示 (加入寬度資訊)
+            const updateDimensionDisplay = (element, percent, pxHeight) => {
+                const widthStr = `寬度: 100vw (${currentWindowWidth.toFixed(0)}px)`;
+                const heightStr = `高度: ${percent}vh (${pxHeight.toFixed(0)}px)`;
+                element.innerHTML = `${widthStr}<br>${heightStr}`;
+            };
+
+            updateDimensionDisplay(headerDimensionDisplay, headerPercent, headerRealPx);
+            updateDimensionDisplay(contentDimensionDisplay, contentPercent, contentRealPx);
+            updateDimensionDisplay(footerDimensionDisplay, footerPercent, footerRealPx);
         }
 
         /**
